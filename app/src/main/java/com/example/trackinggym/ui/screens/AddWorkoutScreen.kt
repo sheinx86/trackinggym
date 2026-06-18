@@ -31,11 +31,19 @@ import java.util.*
 @Composable
 fun AddWorkoutScreen(
     viewModel: MainViewModel,
+    preselectedExerciseId: Long?,
     onNavigateBack: () -> Unit
 ) {
     val exercises by viewModel.exercises.collectAsState()
     
     var selectedExercise by remember { mutableStateOf<Exercise?>(null) }
+
+    LaunchedEffect(preselectedExerciseId, exercises) {
+        if (preselectedExerciseId != null && selectedExercise == null) {
+            selectedExercise = exercises.find { it.id == preselectedExerciseId }
+        }
+    }
+
     var expanded by remember { mutableStateOf(false) }
     
     var dateMs by remember { mutableLongStateOf(System.currentTimeMillis()) }

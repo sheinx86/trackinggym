@@ -26,9 +26,19 @@ fun AppNavigation(viewModel: MainViewModel) {
                 }
             )
         }
-        composable("add_workout") {
+        composable(
+            route = "add_workout?exerciseId={exerciseId}",
+            arguments = listOf(
+                navArgument("exerciseId") { 
+                    type = NavType.LongType
+                    defaultValue = -1L
+                }
+            )
+        ) { backStackEntry ->
+            val preselectedExerciseId = backStackEntry.arguments?.getLong("exerciseId") ?: -1L
             AddWorkoutScreen(
                 viewModel = viewModel,
+                preselectedExerciseId = if (preselectedExerciseId == -1L) null else preselectedExerciseId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -45,7 +55,8 @@ fun AppNavigation(viewModel: MainViewModel) {
                 viewModel = viewModel,
                 exerciseId = id,
                 exerciseName = name,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAddWorkout = { exId -> navController.navigate("add_workout?exerciseId=$exId") }
             )
         }
     }

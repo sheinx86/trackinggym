@@ -26,7 +26,8 @@ fun ExerciseDetailScreen(
     viewModel: MainViewModel,
     exerciseId: Long,
     exerciseName: String,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToAddWorkout: (Long) -> Unit
 ) {
     val logsFlow = remember(exerciseId) { viewModel.getLogsForExercise(exerciseId) }
     val logs by logsFlow.collectAsState(initial = emptyList())
@@ -60,6 +61,14 @@ fun ExerciseDetailScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { onNavigateToAddWorkout(exerciseId) },
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Añadir Entreno")
+            }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
