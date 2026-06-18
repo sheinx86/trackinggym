@@ -3,6 +3,7 @@ package com.example.trackinggym.ui.screens
 import android.app.DatePickerDialog
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -81,60 +82,86 @@ fun AddWorkoutScreen(
 
             val focusRequester = remember { FocusRequester() }
 
-            // Dropdown Ejercicio
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                OutlinedTextField(
-                    value = selectedExercise?.name ?: "Selecciona un ejercicio",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Ejercicio") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor(),
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+            var showSelectExerciseDialog by remember { mutableStateOf(false) }
+
+            // Campo de selección (solo lectura)
+            OutlinedTextField(
+                value = selectedExercise?.name ?: "Selecciona un ejercicio",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Ejercicio") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showSelectExerciseDialog) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showSelectExerciseDialog = true },
+                enabled = false,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (expanded) {
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { 
-                            expanded = false 
-                            searchQuery = ""
-                        }
-                    ) {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            placeholder = { Text("Buscar...") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .focusRequester(focusRequester),
-                            singleLine = true
-                        )
-                        LaunchedEffect(Unit) {
-                            focusRequester.requestFocus()
-                        }
-                        if (filteredExercises.isEmpty()) {
-                            DropdownMenuItem(
-                                text = { Text("No se encontraron ejercicios") },
-                                onClick = {}
+            )
+
+            if (showSelectExerciseDialog) {
+                AlertDialog(
+                    onDismissRequest = { 
+                        showSelectExerciseDialog = false 
+                        searchQuery = "" 
+                    },
+                    title = { Text("Seleccionar Ejercicio") },
+                    text = {
+                        Column {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                placeholder = { Text("Buscar...") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp)
+                                    .focusRequester(focusRequester),
+                                singleLine = true
                             )
-                        } else {
-                            filteredExercises.forEach { ex ->
-                                DropdownMenuItem(
-                                    text = { Text(ex.name) },
-                                    onClick = {
-                                        selectedExercise = ex
-                                        searchQuery = ""
-                                        expanded = false
+                            LaunchedEffect(Unit) {
+                                focusRequester.requestFocus()
+                            }
+                            
+                            LazyColumn(
+                                modifier = Modifier.weight(1f, fill = false)
+                            ) {
+                                if (filteredExercises.isEmpty()) {
+                                    item {
+                                        Text("No se encontraron ejercicios", modifier = Modifier.padding(16.dp))
                                     }
-                                )
+                                } else {
+                                    items(filteredExercises) { ex ->
+                                        Text(
+                                            text = ex.name,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    selectedExercise = ex
+                                                    searchQuery = ""
+                                                    showSelectExerciseDialog = false
+                                                }
+                                                .padding(16.dp)
+                                        )
+                                        HorizontalDivider()
+                                    }
+                                }
                             }
                         }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { 
+                            showSelectExerciseDialog = false 
+                            searchQuery = "" 
+                        }) {
+                            Text("Cancelar")
+                        }
                     }
-                }
+                )
             }
             
             Spacer(modifier = Modifier.height(16.dp))
