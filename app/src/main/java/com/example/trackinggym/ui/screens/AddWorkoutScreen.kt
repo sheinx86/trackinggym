@@ -83,17 +83,15 @@ fun AddWorkoutScreen(
                 onExpandedChange = { expanded = !expanded }
             ) {
                 OutlinedTextField(
-                    value = if (expanded) searchQuery else (selectedExercise?.name ?: "Selecciona un ejercicio"),
-                    onValueChange = { 
-                        searchQuery = it 
-                        expanded = true 
-                    },
+                    value = selectedExercise?.name ?: "Selecciona un ejercicio",
+                    onValueChange = {},
+                    readOnly = true,
                     label = { Text("Ejercicio") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(),
                     colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                 )
-                if (filteredExercises.isNotEmpty() && expanded) {
+                if (expanded) {
                     ExposedDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { 
@@ -101,15 +99,31 @@ fun AddWorkoutScreen(
                             searchQuery = ""
                         }
                     ) {
-                        filteredExercises.forEach { ex ->
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = { Text("Buscar...") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            singleLine = true
+                        )
+                        if (filteredExercises.isEmpty()) {
                             DropdownMenuItem(
-                                text = { Text(ex.name) },
-                                onClick = {
-                                    selectedExercise = ex
-                                    searchQuery = ""
-                                    expanded = false
-                                }
+                                text = { Text("No se encontraron ejercicios") },
+                                onClick = {}
                             )
+                        } else {
+                            filteredExercises.forEach { ex ->
+                                DropdownMenuItem(
+                                    text = { Text(ex.name) },
+                                    onClick = {
+                                        selectedExercise = ex
+                                        searchQuery = ""
+                                        expanded = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
