@@ -77,6 +77,8 @@ fun AddWorkoutScreen(
                 it.name.contains(searchQuery, ignoreCase = true)
             }
 
+            val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+
             // Dropdown Ejercicio
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -105,9 +107,13 @@ fun AddWorkoutScreen(
                             placeholder = { Text("Buscar...") },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .androidx.compose.ui.focus.focusRequester(focusRequester),
                             singleLine = true
                         )
+                        LaunchedEffect(Unit) {
+                            focusRequester.requestFocus()
+                        }
                         if (filteredExercises.isEmpty()) {
                             DropdownMenuItem(
                                 text = { Text("No se encontraron ejercicios") },
