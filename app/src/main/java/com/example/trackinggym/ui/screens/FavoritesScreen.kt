@@ -3,47 +3,99 @@ package com.example.trackinggym.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.trackinggym.data.entities.Exercise
 import com.example.trackinggym.data.entities.ExerciseWithLatestLog
 import com.example.trackinggym.ui.MainViewModel
-import com.example.trackinggym.ui.components.AddLogDialog
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoritesScreen(viewModel: MainViewModel, onNavigateToDetail: (Long, String) -> Unit) {
-    val favorites by viewModel.favoriteExercises.collectAsState()
+fun FavoritesScreen(viewModel: MainViewModel, onNavigateToDetail: (Long, String) -> Unit, onNavigateToAddWorkout: () -> Unit) {
+    val allFavorites by viewModel.favoriteExercises.collectAsState()
 
-    Scaffold { paddingValues ->
-        if (favorites.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                Text(
-                    "No tienes ejercicios favoritos aún.",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    val categories = listOf("Pecho", "Espalda", "Brazos", "Piernas")
+
+    val filteredFavorites = allFavorites.filter { item ->
+        val matchesSearch = item.exercise.name.contains(searchQuery, ignoreCase = true) || item.exercise.category.contains(searchQuery, ignoreCase = true)
+        val matchesCategory = selectedCategory == null || item.exercise.category == selectedCategory
+        matchesSearch && matchesCategory
+    }.sortedBy { it.exercise.name }
+
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToAddWorkout,
+                containerColor = MaterialTheme.colorScheme.primaryContainer
             ) {
-                items(favorites) { item ->
-                    FavoriteExerciseItem(
-                        item = item,
-                        onClick = { onNavigateToDetail(item.exercise.id, item.exercise.name) }
+                Icon(Icons.Default.Add, contentDescription = "Añadir Entreno")
+            }
+        }
+    ) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            // Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                placeholder = { Text("Buscar favorito o categoría...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
+            )
+
+            // Category Filters
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                item {
+                    FilterChip(
+                        selected = selectedCategory == null,
+                        onClick = { selectedCategory = null },
+                        label = { Text("Todos") }
                     )
+                }
+                items(categories) { category ->
+                    FilterChip(
+                        selected = selectedCategory == category,
+                        onClick = { selectedCategory = category },
+                        label = { Text(category) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (filteredFavorites.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
+                    Text("No hay favoritos que coincidan.", style = MaterialTheme.typography.bodyLarge)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(filteredFavorites) { item ->
+                        FavoriteExerciseItem(
+                            item = item,
+                            onClick = { onNavigateToDetail(item.exercise.id, item.exercise.name) }
+                        )
+                    }
                 }
             }
         }
@@ -55,56 +107,58 @@ fun FavoriteExerciseItem(
     item: ExerciseWithLatestLog,
     onClick: () -> Unit
 ) {
-    val formatter = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
-    val dateStr = item.latestLogDateMs?.let { formatter.format(Date(it)) } ?: "Sin registro"
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text(
-                text = item.exercise.name,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Último: $dateStr", style = MaterialTheme.typography.bodyMedium)
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                val setsInfo = item.latestLogSets
-                if (setsInfo.isNullOrEmpty()) {
-                    Text("Sin series registradas", style = MaterialTheme.typography.bodyMedium)
-                } else {
-                    val totalSets = setsInfo.size
-                    val totalReps = setsInfo.sumOf { it.reps }
-                    val maxWeight = setsInfo.maxOfOrNull { it.weight } ?: 0f
-                    LogMetric(label = "Series", value = "$totalSets")
-                    LogMetric(label = "Reps Totales", value = "$totalReps")
-                    LogMetric(label = "Peso Máx", value = "$maxWeight kg")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = item.exercise.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Badge(containerColor = MaterialTheme.colorScheme.secondaryContainer) {
+                    Text(
+                        text = item.exercise.category,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
                 }
             }
-        }
-    }
-}
 
-@Composable
-fun LogMetric(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            if (item.latestLogDateMs != null && item.latestLogSets != null) {
+                val formatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+                val dateStr = formatter.format(Date(item.latestLogDateMs))
+                
+                Text(
+                    text = "Último: $dateStr",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${item.latestLogSets.size} series realizadas",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            } else {
+                Text(
+                    text = "Sin entrenamientos previos",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }

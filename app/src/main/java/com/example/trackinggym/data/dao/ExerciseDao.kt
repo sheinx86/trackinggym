@@ -1,6 +1,7 @@
 package com.example.trackinggym.data.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -41,4 +42,29 @@ interface ExerciseDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExerciseLog(log: ExerciseLog): Long
+
+    @Delete
+    suspend fun deleteExercise(exercise: Exercise)
+
+    @Delete
+    suspend fun deleteExerciseLog(log: ExerciseLog)
+
+    // Export & Import support
+    @Query("SELECT * FROM exercises")
+    suspend fun getAllExercisesList(): List<Exercise>
+
+    @Query("SELECT * FROM exercise_logs")
+    suspend fun getAllLogsList(): List<ExerciseLog>
+
+    @Query("DELETE FROM exercises")
+    suspend fun clearAllExercises()
+
+    @Query("DELETE FROM exercise_logs")
+    suspend fun clearAllLogs()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllExercises(exercises: List<Exercise>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllLogs(logs: List<ExerciseLog>)
 }

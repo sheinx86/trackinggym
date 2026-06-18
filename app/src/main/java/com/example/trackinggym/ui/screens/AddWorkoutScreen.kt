@@ -39,6 +39,7 @@ fun AddWorkoutScreen(
     val context = LocalContext.current
     
     var sets by remember { mutableStateOf(listOf(SetRecord(1, 0, 0f))) }
+    var comments by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -55,7 +56,7 @@ fun AddWorkoutScreen(
             ExtendedFloatingActionButton(
                 onClick = {
                     selectedExercise?.let { ex ->
-                        viewModel.saveWorkout(ex.id, dateMs, sets)
+                        viewModel.saveWorkout(ex.id, dateMs, sets, comments.trim())
                         onNavigateBack()
                     }
                 },
@@ -124,6 +125,18 @@ fun AddWorkoutScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Comentarios
+            OutlinedTextField(
+                value = comments,
+                onValueChange = { comments = it },
+                label = { Text("Comentarios (opcional)") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3,
+                maxLines = 5
             )
             
             Spacer(modifier = Modifier.height(24.dp))

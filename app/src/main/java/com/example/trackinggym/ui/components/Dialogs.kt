@@ -14,10 +14,13 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AddExerciseDialog(
     onDismiss: () -> Unit,
-    onSave: (name: String, isFavorite: Boolean) -> Unit
+    onSave: (name: String, category: String, isFavorite: Boolean) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var isFavorite by remember { mutableStateOf(false) }
+    var category by remember { mutableStateOf("Pecho") }
+    var isFavorite by remember { mutableStateOf(true) }
+    var expanded by remember { mutableStateOf(false) }
+    val categories = listOf("Pecho", "Espalda", "Brazos", "Piernas")
 
     BasicAlertDialog(
         onDismissRequest = onDismiss,
@@ -47,6 +50,35 @@ fun AddExerciseDialog(
                     shape = RoundedCornerShape(12.dp)
                 )
 
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Categoría") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        categories.forEach { cat ->
+                            DropdownMenuItem(
+                                text = { Text(cat) },
+                                onClick = {
+                                    category = cat
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -67,7 +99,7 @@ fun AddExerciseDialog(
                     Button(
                         onClick = {
                             if (name.isNotBlank()) {
-                                onSave(name.trim(), isFavorite)
+                                onSave(name.trim(), category, isFavorite)
                                 onDismiss()
                             }
                         },

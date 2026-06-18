@@ -22,5 +22,6 @@ data class ExerciseLog(
     val id: Long = 0,
     val exerciseId: Long,
     val dateMs: Long,
-    val sets: List<SetRecord>
+    val sets: List<SetRecord>,
+    val comments: String = ""
 )
