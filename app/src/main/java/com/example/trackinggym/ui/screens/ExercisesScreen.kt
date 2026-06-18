@@ -36,7 +36,7 @@ fun ExercisesScreen(viewModel: MainViewModel, onNavigateToDetail: (Long, String)
         val matchesSearch = ex.name.contains(searchQuery, ignoreCase = true) || ex.category.contains(searchQuery, ignoreCase = true)
         val matchesCategory = selectedCategory == null || ex.category == selectedCategory
         matchesSearch && matchesCategory
-    }.sortedBy { it.name }
+    }.sortedBy { it.name.lowercase(java.util.Locale.getDefault()) }
 
     Scaffold(
         floatingActionButton = {

@@ -32,7 +32,7 @@ fun FavoritesScreen(viewModel: MainViewModel, onNavigateToDetail: (Long, String)
         val matchesSearch = item.exercise.name.contains(searchQuery, ignoreCase = true) || item.exercise.category.contains(searchQuery, ignoreCase = true)
         val matchesCategory = selectedCategory == null || item.exercise.category == selectedCategory
         matchesSearch && matchesCategory
-    }.sortedBy { it.exercise.name }
+    }.sortedBy { it.exercise.name.lowercase(Locale.getDefault()) }
 
     Scaffold(
         floatingActionButton = {
