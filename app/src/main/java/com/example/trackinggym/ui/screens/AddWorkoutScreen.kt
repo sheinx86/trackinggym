@@ -1,0 +1,215 @@
+package com.example.trackinggym.ui.screens
+
+import android.app.DatePickerDialog
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import com.example.trackinggym.data.entities.Exercise
+import com.example.trackinggym.data.entities.SetRecord
+import com.example.trackinggym.ui.MainViewModel
+import java.text.SimpleDateFormat
+import java.util.*
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddWorkoutScreen(
+    viewModel: MainViewModel,
+    onNavigateBack: () -> Unit
+) {
+    val exercises by viewModel.exercises.collectAsState()
+    
+    var selectedExercise by remember { mutableStateOf<Exercise?>(null) }
+    var expanded by remember { mutableStateOf(false) }
+    
+    var dateMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    val formatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val context = LocalContext.current
+    
+    var sets by remember { mutableStateOf(listOf(SetRecord(1, 0, 0f))) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Añadir Entreno") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = {
+                    selectedExercise?.let { ex ->
+                        viewModel.saveWorkout(ex.id, dateMs, sets)
+                        onNavigateBack()
+                    }
+                },
+                icon = { Icon(Icons.Default.Add, contentDescription = "Guardar") },
+                text = { Text("Guardar Entreno") }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+        ) {
+            // Dropdown Ejercicio
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
+            ) {
+                OutlinedTextField(
+                    value = selectedExercise?.name ?: "Selecciona un ejercicio",
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    exercises.forEach { ex ->
+                        DropdownMenuItem(
+                            text = { Text(ex.name) },
+                            onClick = {
+                                selectedExercise = ex
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Selector de Fecha
+            OutlinedTextField(
+                value = formatter.format(Date(dateMs)),
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Fecha") },
+                trailingIcon = {
+                    IconButton(onClick = {
+                        val cal = Calendar.getInstance().apply { timeInMillis = dateMs }
+                        DatePickerDialog(
+                            context,
+                            { _, y, m, d ->
+                                val newCal = Calendar.getInstance().apply { set(y, m, d) }
+                                dateMs = newCal.timeInMillis
+                            },
+                            cal.get(Calendar.YEAR),
+                            cal.get(Calendar.MONTH),
+                            cal.get(Calendar.DAY_OF_MONTH)
+                        ).show()
+                    }) {
+                        Icon(Icons.Default.DateRange, "Seleccionar Fecha")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Series", style = MaterialTheme.typography.titleLarge)
+                TextButton(onClick = { 
+                    sets = sets + SetRecord(sets.size + 1, 0, 0f) 
+                }) {
+                    Text("+ Añadir serie")
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Lista de series
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                itemsIndexed(sets) { index, setRecord ->
+                    SetRow(
+                        setNumber = index + 1,
+                        reps = setRecord.reps,
+                        weight = setRecord.weight,
+                        onRepsChange = { newReps ->
+                            val mut = sets.toMutableList()
+                            mut[index] = setRecord.copy(reps = newReps)
+                            sets = mut
+                        },
+                        onWeightChange = { newWeight ->
+                            val mut = sets.toMutableList()
+                            mut[index] = setRecord.copy(weight = newWeight)
+                            sets = mut
+                        },
+                        onDelete = {
+                            val mut = sets.toMutableList()
+                            mut.removeAt(index)
+                            // Recalculate set numbers
+                            sets = mut.mapIndexed { i, record -> record.copy(setNumber = i + 1) }
+                        }
+                    )
+                }
+                item { Spacer(modifier = Modifier.height(80.dp)) } // ESPACIO PARA EL FAB
+            }
+        }
+    }
+}
+
+@Composable
+fun SetRow(
+    setNumber: Int,
+    reps: Int,
+    weight: Float,
+    onRepsChange: (Int) -> Unit,
+    onWeightChange: (Float) -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("S$setNumber", modifier = Modifier.width(32.dp), style = MaterialTheme.typography.labelLarge)
+            
+            OutlinedTextField(
+                value = if (reps == 0) "" else reps.toString(),
+                onValueChange = { onRepsChange(it.toIntOrNull() ?: 0) },
+                label = { Text("Reps") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f),
+                singleLine = true
+            )
+            
+            OutlinedTextField(
+                value = if (weight == 0f) "" else weight.toString(),
+                onValueChange = { onWeightChange(it.toFloatOrNull() ?: 0f) },
+                label = { Text("Kg") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.weight(1f),
+                singleLine = true
+            )
+            
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Eliminar serie", tint = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
