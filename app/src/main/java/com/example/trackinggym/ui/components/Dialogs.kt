@@ -20,7 +20,7 @@ fun AddExerciseDialog(
     var category by remember { mutableStateOf("Pecho") }
     var isFavorite by remember { mutableStateOf(true) }
     var expanded by remember { mutableStateOf(false) }
-    val categories = listOf("Pecho", "Espalda", "Brazos", "Piernas")
+    val categories = listOf("Brazos", "Espalda", "Hombros", "Pecho", "Piernas")
 
     BasicAlertDialog(
         onDismissRequest = onDismiss,

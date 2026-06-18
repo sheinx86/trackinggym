@@ -28,7 +28,7 @@ fun ExercisesScreen(viewModel: MainViewModel, onNavigateToDetail: (Long, String)
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
-    val categories = listOf("Pecho", "Espalda", "Brazos", "Piernas")
+    val categories = listOf("Brazos", "Espalda", "Hombros", "Pecho", "Piernas")
 
     var exerciseToDelete by remember { mutableStateOf<Exercise?>(null) }
 

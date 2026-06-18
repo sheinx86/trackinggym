@@ -2,12 +2,12 @@ package com.example.trackinggym.theme
 
 import androidx.compose.ui.graphics.Color
 
-val GymNeonOrange = Color(0xFFFF5722)
-val GymDarkGrey = Color(0xFF121212)
-val GymMediumGrey = Color(0xFF1E1E1E)
-val GymLightGrey = Color(0xFF2C2C2C)
+val GymPrimaryBlue = Color(0xFF2979FF)
+val GymDarkBlue = Color(0xFF0A192F)
+val GymMediumBlue = Color(0xFF112240)
+val GymLightBlue = Color(0xFF233554)
 
-val GymNeonGreen = Color(0xFF00E676)
+val GymSecondaryBlue = Color(0xFF00B0FF)
 val GymRed = Color(0xFFD32F2F)
 
 val TextWhite = Color(0xFFFFFFFF)

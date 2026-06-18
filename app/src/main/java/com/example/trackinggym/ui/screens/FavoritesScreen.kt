@@ -26,7 +26,7 @@ fun FavoritesScreen(viewModel: MainViewModel, onNavigateToDetail: (Long, String)
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
-    val categories = listOf("Pecho", "Espalda", "Brazos", "Piernas")
+    val categories = listOf("Brazos", "Espalda", "Hombros", "Pecho", "Piernas")
 
     val filteredFavorites = allFavorites.filter { item ->
         val matchesSearch = item.exercise.name.contains(searchQuery, ignoreCase = true) || item.exercise.category.contains(searchQuery, ignoreCase = true)

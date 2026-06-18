@@ -6,13 +6,13 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
 private val GymColorScheme = darkColorScheme(
-    primary = GymNeonOrange,
+    primary = GymPrimaryBlue,
     onPrimary = TextWhite,
-    secondary = GymNeonGreen,
+    secondary = GymSecondaryBlue,
     tertiary = GymRed,
-    background = GymDarkGrey,
-    surface = GymMediumGrey,
-    surfaceVariant = GymLightGrey,
+    background = GymDarkBlue,
+    surface = GymMediumBlue,
+    surfaceVariant = GymLightBlue,
     onBackground = TextWhite,
     onSurface = TextWhite,
     onSurfaceVariant = TextLightGrey
