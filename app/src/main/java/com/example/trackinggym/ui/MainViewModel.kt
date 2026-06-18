@@ -22,8 +22,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun addExercise(name: String, category: String, isFavorite: Boolean) {
+        val capitalizedName = name.trim().replaceFirstChar { 
+            if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString() 
+        }
         viewModelScope.launch {
-            dao.insertExercise(Exercise(name = name, category = category, isFavorite = isFavorite))
+            dao.insertExercise(Exercise(name = capitalizedName, category = category, isFavorite = isFavorite))
         }
     }
 
