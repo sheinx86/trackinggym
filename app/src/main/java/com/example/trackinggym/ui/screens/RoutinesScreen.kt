@@ -80,15 +80,6 @@ fun RoutineCard(
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     
-    // Fetch max date for the routine's exercises
-    val maxDateFlow = remember(routine.exerciseIds) { viewModel.getMaxDateForExercises(routine.exerciseIds) }
-    val maxDateMs by maxDateFlow.collectAsState(initial = null)
-    
-    val dateText = maxDateMs?.let {
-        val format = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-        "Último entreno: ${format.format(Date(it))}"
-    } ?: "Sin entrenamientos aún"
-
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -111,13 +102,8 @@ fun RoutineCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = dateText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
                         text = "${routine.exerciseIds.size} ejercicios",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
