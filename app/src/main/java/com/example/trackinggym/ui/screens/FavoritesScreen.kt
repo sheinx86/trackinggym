@@ -28,11 +28,18 @@ fun FavoritesScreen(viewModel: MainViewModel, onNavigateToDetail: (Long, String)
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     val categories = listOf("Brazos", "Cardio", "Core", "Espalda", "Hombros", "Pecho", "Piernas")
 
+    var currentPage by remember { mutableIntStateOf(0) }
+    val itemsPerPage = 5
+
     val filteredFavorites = allFavorites.filter { item ->
         val matchesSearch = item.exercise.name.contains(searchQuery, ignoreCase = true) || item.exercise.category.contains(searchQuery, ignoreCase = true)
         val matchesCategory = selectedCategory == null || item.exercise.category == selectedCategory
         matchesSearch && matchesCategory
     }.sortedBy { it.exercise.name.lowercase(Locale.getDefault()) }
+
+    LaunchedEffect(searchQuery, selectedCategory) {
+        currentPage = 0
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -90,11 +97,38 @@ fun FavoritesScreen(viewModel: MainViewModel, onNavigateToDetail: (Long, String)
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(filteredFavorites) { item ->
+                    val totalPages = (filteredFavorites.size + itemsPerPage - 1).coerceAtLeast(0) / itemsPerPage
+                    val pagedFavorites = filteredFavorites.drop(currentPage * itemsPerPage).take(itemsPerPage)
+
+                    items(pagedFavorites) { item ->
                         FavoriteExerciseItem(
                             item = item,
                             onClick = { onNavigateToDetail(item.exercise.id, item.exercise.name) }
                         )
+                    }
+
+                    if (totalPages > 1) {
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(
+                                    onClick = { if (currentPage > 0) currentPage-- },
+                                    enabled = currentPage > 0
+                                ) {
+                                    Text("Anterior")
+                                }
+                                Text("Página ${currentPage + 1} de $totalPages")
+                                TextButton(
+                                    onClick = { if (currentPage < totalPages - 1) currentPage++ },
+                                    enabled = currentPage < totalPages - 1
+                                ) {
+                                    Text("Siguiente")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -147,10 +181,13 @@ fun FavoriteExerciseItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(4.dp))
+                val setsSummary = item.latestLogSets.joinToString(", ") { "s${it.setNumber}: ${it.reps}x${it.weight}kg" }
                 Text(
-                    text = "${item.latestLogSets.size} series realizadas",
+                    text = setsSummary.ifEmpty { "Sin series" },
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
             } else {
                 Text(

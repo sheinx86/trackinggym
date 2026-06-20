@@ -61,7 +61,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateWorkout(log: ExerciseLog) {
+        viewModelScope.launch {
+            dao.updateExerciseLog(log)
+        }
+    }
+
+    // --- Routines ---
+    val routines = dao.getAllRoutines()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun createRoutine(name: String, exerciseIds: List<Long>) {
+        viewModelScope.launch {
+            dao.insertRoutine(com.example.trackinggym.data.entities.Routine(name = name, exerciseIds = exerciseIds))
+        }
+    }
+
+    fun createRoutineWithId(id: Long, name: String, exerciseIds: List<Long>) {
+        viewModelScope.launch {
+            dao.insertRoutine(com.example.trackinggym.data.entities.Routine(id = id, name = name, exerciseIds = exerciseIds))
+        }
+    }
+
+    fun deleteRoutine(routine: com.example.trackinggym.data.entities.Routine) {
+        viewModelScope.launch {
+            dao.deleteRoutine(routine)
+        }
+    }
+
+    fun getMaxDateForExercises(exerciseIds: List<Long>) = dao.getMaxDateForExercises(exerciseIds)
+    
+    fun getExercisesByIds(exerciseIds: List<Long>) = dao.getExercisesByIds(exerciseIds)
+
+    fun getExercisesWithLatestLogByIds(exerciseIds: List<Long>) = dao.getExercisesWithLatestLogByIds(exerciseIds)
+
     fun getLogsForExercise(exerciseId: Long) = dao.getLogsForExercise(exerciseId)
+
+    suspend fun getLogById(logId: Long) = dao.getLogById(logId)
+
+    suspend fun getLogsForExercisesByDateRange(exerciseIds: List<Long>, startOfDay: Long, endOfDay: Long) = 
+        dao.getLogsForExercisesByDateRange(exerciseIds, startOfDay, endOfDay)
 
     suspend fun getExportDataJson(): String {
         val exercises = dao.getAllExercisesList()

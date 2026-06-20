@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.trackinggym.data.entities.Exercise
+import com.example.trackinggym.data.entities.ExerciseLog
 import com.example.trackinggym.data.entities.SetRecord
 import com.example.trackinggym.ui.MainViewModel
 import java.text.SimpleDateFormat
@@ -32,17 +33,13 @@ import java.util.*
 fun AddWorkoutScreen(
     viewModel: MainViewModel,
     preselectedExerciseId: Long?,
+    logIdToEdit: Long?,
     onNavigateBack: () -> Unit
 ) {
     val exercises by viewModel.exercises.collectAsState()
     
     var selectedExercise by remember { mutableStateOf<Exercise?>(null) }
-
-    LaunchedEffect(preselectedExerciseId, exercises) {
-        if (preselectedExerciseId != null && selectedExercise == null) {
-            selectedExercise = exercises.find { it.id == preselectedExerciseId }
-        }
-    }
+    var loadedLog by remember { mutableStateOf<ExerciseLog?>(null) }
 
     var expanded by remember { mutableStateOf(false) }
     
@@ -53,10 +50,25 @@ fun AddWorkoutScreen(
     var sets by remember { mutableStateOf(listOf(SetRecord(1, 0, 0f))) }
     var comments by remember { mutableStateOf("") }
 
+    LaunchedEffect(logIdToEdit, preselectedExerciseId, exercises) {
+        if (logIdToEdit != null) {
+            val log = viewModel.getLogById(logIdToEdit)
+            if (log != null) {
+                loadedLog = log
+                selectedExercise = exercises.find { it.id == log.exerciseId }
+                dateMs = log.dateMs
+                sets = log.sets.ifEmpty { listOf(SetRecord(1, 0, 0f)) }
+                comments = log.comments
+            }
+        } else if (preselectedExerciseId != null && selectedExercise == null) {
+            selectedExercise = exercises.find { it.id == preselectedExerciseId }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Añadir Entreno") },
+                title = { Text(if (logIdToEdit != null) "Editar Entreno" else "Añadir Entreno") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
@@ -68,7 +80,19 @@ fun AddWorkoutScreen(
             ExtendedFloatingActionButton(
                 onClick = {
                     selectedExercise?.let { ex ->
-                        viewModel.saveWorkout(ex.id, dateMs, sets, comments.trim())
+                        val currentLog = loadedLog
+                        if (logIdToEdit != null && currentLog != null) {
+                            viewModel.updateWorkout(
+                                currentLog.copy(
+                                    exerciseId = ex.id,
+                                    dateMs = dateMs,
+                                    sets = sets,
+                                    comments = comments.trim()
+                                )
+                            )
+                        } else {
+                            viewModel.saveWorkout(ex.id, dateMs, sets, comments.trim())
+                        }
                         onNavigateBack()
                     }
                 },
@@ -233,6 +257,7 @@ fun AddWorkoutScreen(
                         setNumber = index + 1,
                         reps = setRecord.reps,
                         weight = setRecord.weight,
+                        rir = setRecord.rir,
                         onRepsChange = { newReps ->
                             val mut = sets.toMutableList()
                             mut[index] = setRecord.copy(reps = newReps)
@@ -241,6 +266,11 @@ fun AddWorkoutScreen(
                         onWeightChange = { newWeight ->
                             val mut = sets.toMutableList()
                             mut[index] = setRecord.copy(weight = newWeight)
+                            sets = mut
+                        },
+                        onRirChange = { newRir ->
+                            val mut = sets.toMutableList()
+                            mut[index] = setRecord.copy(rir = newRir)
                             sets = mut
                         },
                         onDelete = {
@@ -262,8 +292,10 @@ fun SetRow(
     setNumber: Int,
     reps: Int,
     weight: Float,
+    rir: Int?,
     onRepsChange: (Int) -> Unit,
     onWeightChange: (Float) -> Unit,
+    onRirChange: (Int?) -> Unit,
     onDelete: () -> Unit
 ) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
@@ -274,7 +306,7 @@ fun SetRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("S$setNumber", modifier = Modifier.width(32.dp), style = MaterialTheme.typography.labelLarge)
+            Text("S$setNumber", modifier = Modifier.width(28.dp), style = MaterialTheme.typography.labelLarge)
             
             OutlinedTextField(
                 value = if (reps == 0) "" else reps.toString(),
@@ -285,16 +317,32 @@ fun SetRow(
                 singleLine = true
             )
             
+            var weightText by remember(weight) { 
+                mutableStateOf(if (weight == 0f) "" else if (weight % 1 == 0f) weight.toInt().toString() else weight.toString()) 
+            }
             OutlinedTextField(
-                value = if (weight == 0f) "" else weight.toString(),
-                onValueChange = { onWeightChange(it.toFloatOrNull() ?: 0f) },
+                value = weightText,
+                onValueChange = { input -> 
+                    weightText = input
+                    val parsed = input.replace(',', '.').toFloatOrNull() ?: 0f
+                    onWeightChange(parsed)
+                },
                 label = { Text("Kg") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.weight(1f),
                 singleLine = true
             )
             
-            IconButton(onClick = onDelete) {
+            OutlinedTextField(
+                value = rir?.toString() ?: "",
+                onValueChange = { onRirChange(if (it.isBlank()) null else it.toIntOrNull()) },
+                label = { Text("RIR") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f),
+                singleLine = true
+            )
+            
+            IconButton(onClick = onDelete, modifier = Modifier.width(32.dp)) {
                 Icon(Icons.Default.Delete, contentDescription = "Eliminar serie", tint = MaterialTheme.colorScheme.error)
             }
         }

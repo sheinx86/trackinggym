@@ -11,7 +11,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
@@ -49,10 +49,17 @@ class MainActivity : ComponentActivity() {
 fun MainAppScreen(
     viewModel: MainViewModel, 
     onNavigateToAddWorkout: () -> Unit,
-    onNavigateToDetail: (Long, String) -> Unit
+    onNavigateToDetail: (Long, String) -> Unit,
+    onNavigateToCreateRoutine: () -> Unit,
+    onNavigateToRoutineDetail: (Long, String) -> Unit,
+    onNavigateToEditRoutine: (Long) -> Unit
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Favoritos" to Icons.Default.Favorite, "Ejercicios" to Icons.AutoMirrored.Filled.List)
+    val tabs = listOf(
+        "Rutinas" to Icons.Default.List,
+        "Favoritos" to Icons.Default.Favorite, 
+        "Ejercicios" to Icons.Default.List
+    )
     
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -158,8 +165,14 @@ fun MainAppScreen(
             color = MaterialTheme.colorScheme.background
         ) {
             when (selectedTabIndex) {
-                0 -> FavoritesScreen(viewModel, onNavigateToDetail, onNavigateToAddWorkout)
-                1 -> ExercisesScreen(viewModel, onNavigateToDetail)
+                0 -> com.example.trackinggym.ui.screens.RoutinesScreen(
+                        viewModel = viewModel, 
+                        onNavigateToCreateRoutine = onNavigateToCreateRoutine, 
+                        onNavigateToRoutineDetail = onNavigateToRoutineDetail,
+                        onNavigateToEditRoutine = onNavigateToEditRoutine
+                     )
+                1 -> FavoritesScreen(viewModel, onNavigateToDetail, onNavigateToAddWorkout)
+                2 -> ExercisesScreen(viewModel, onNavigateToDetail)
             }
         }
         

@@ -18,4 +18,15 @@ class Converters {
         val type = object : TypeToken<List<SetRecord>>() {}.type
         return gson.fromJson(value, type) ?: emptyList()
     }
+
+    @TypeConverter
+    fun fromLongList(value: List<Long>?): String {
+        return gson.toJson(value)
+    }
+
+    @TypeConverter
+    fun toLongList(value: String): List<Long> {
+        val type = object : TypeToken<List<Long>>() {}.type
+        return gson.fromJson(value, type) ?: emptyList()
+    }
 }

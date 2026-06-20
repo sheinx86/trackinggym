@@ -7,15 +7,16 @@ import androidx.compose.runtime.Composable
 
 private val GymColorScheme = darkColorScheme(
     primary = GymPrimaryBlue,
-    onPrimary = TextWhite,
+    onPrimary = TextLight,
     secondary = GymSecondaryBlue,
-    tertiary = GymRed,
-    background = GymDarkBlue,
-    surface = GymMediumBlue,
-    surfaceVariant = GymLightBlue,
-    onBackground = TextWhite,
-    onSurface = TextWhite,
-    onSurfaceVariant = TextLightGrey
+    tertiary = GymAccentYellow,
+    background = GymBackground,
+    surface = GymSurface,
+    surfaceVariant = GymSurfaceVariant,
+    onBackground = TextLight,
+    onSurface = TextLight,
+    onSurfaceVariant = TextGrey,
+    error = GymRed
 )
 
 @Composable
@@ -25,7 +26,7 @@ fun TrackingGymTheme(
   dynamicColor: Boolean = true,
   content: @Composable () -> Unit,
 ) {
-  // Always use our custom Gym dark theme for branding
+  // Always use our custom Gym light theme for branding
   val colorScheme = GymColorScheme
 
   MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)

@@ -11,7 +11,9 @@ import com.example.trackinggym.data.dao.ExerciseDao
 import com.example.trackinggym.data.entities.Exercise
 import com.example.trackinggym.data.entities.ExerciseLog
 
-@Database(entities = [Exercise::class, ExerciseLog::class], version = 3, exportSchema = false)
+import com.example.trackinggym.data.entities.Routine
+
+@Database(entities = [Exercise::class, ExerciseLog::class, Routine::class], version = 4, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun exerciseDao(): ExerciseDao
@@ -27,6 +29,12 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `routines` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `exerciseIds` TEXT NOT NULL)")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -34,7 +42,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "tracking_gym_database"
                 )
-                    .addMigrations(MIGRATION_2_3)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
